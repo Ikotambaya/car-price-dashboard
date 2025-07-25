@@ -4,31 +4,11 @@ import plotly.express as px
 import plotly.figure_factory as ff
 import joblib
 import os
-import requests
 
-# === OneDrive Direct Links ===
-MODEL_URLS = {
-    "model": "https://1drv.ms/u/c/6c724deadf3112a0/Edpn_ZWxDi1Kl3C9617z2N4BoiFwp4cM4PzUSq-Foci8Ww?e=bni1YI",
-    "scaler": "https://1drv.ms/u/c/6c724deadf3112a0/EVdJ5eC0fdZAvcAcltwyLq0Bmo3ar50eB3b5L_aJzaBn6w?e=2R0kWG",
-    "encoders": "https://1drv.ms/u/c/6c724deadf3112a0/EWuMBX-bAmpMsM2qrf21W2kBrReBpEyk3-MaDoDyB0JduQ?e=S9Rrsu"
-}
+from utils.downloads import maybe_download_model
 
-def download_file(url, dest_path):
-    if not os.path.exists(dest_path):
-        with requests.get(url) as r:
-            if r.status_code == 200:
-                with open(dest_path, 'wb') as f:
-                    f.write(r.content)
-            else:
-                st.error(f"Failed to download {url}")
-
-# === Ensure Models Directory Exists ===
-os.makedirs("models", exist_ok=True)
-
-# === Download Required Files ===
-download_file(MODEL_URLS["model"], "models/price_model.pkl")
-download_file(MODEL_URLS["scaler"], "models/scaler.pkl")
-download_file(MODEL_URLS["encoders"], "models/encoders.pkl")
+# === Download Required Models if Missing ===
+maybe_download_model()
 
 # === Load Data ===
 car_data_df = pd.read_csv('data/car_data.csv')
