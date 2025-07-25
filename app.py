@@ -3,19 +3,13 @@ import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 import joblib
-import os
 
-from utils.downloads import maybe_download_model
-
-# === Download Required Models if Missing ===
-maybe_download_model()
-
-# === Load Data ===
+# === Load data ===
 car_data_df = pd.read_csv('data/car_data.csv')
 car_data_df['Car_Age'] = 2025 - car_data_df['Year of manufacture']
 car_data_df['Year'] = car_data_df['Year of manufacture']
 
-# === Load Model and Preprocessors ===
+# === Load model and preprocessors ===
 model = joblib.load("models/price_model.pkl")
 scaler = joblib.load("models/scaler.pkl")
 encoders = joblib.load("models/encoders.pkl")
@@ -28,23 +22,29 @@ with tab1:
     st.title("📈 Car Sales Data - Interactive Dashboard")
 
     st.subheader("Distribution of Car Prices")
-    st.plotly_chart(px.histogram(car_data_df, x='Price', nbins=40))
+    fig_price = px.histogram(car_data_df, x='Price', nbins=40)
+    st.plotly_chart(fig_price)
 
     st.subheader("Distribution of Mileage")
-    st.plotly_chart(px.histogram(car_data_df, x='Mileage', nbins=40))
+    fig_mileage = px.histogram(car_data_df, x='Mileage', nbins=40)
+    st.plotly_chart(fig_mileage)
 
     st.subheader("Distribution of Car Age")
-    st.plotly_chart(px.histogram(car_data_df, x='Car_Age', nbins=30))
+    fig_age = px.histogram(car_data_df, x='Car_Age', nbins=30)
+    st.plotly_chart(fig_age)
 
     st.subheader("Average Price by Year of Manufacture")
     trend_data = car_data_df.groupby('Year')['Price'].mean().reset_index()
-    st.plotly_chart(px.line(trend_data, x='Year', y='Price'))
+    fig_trend = px.line(trend_data, x='Year', y='Price')
+    st.plotly_chart(fig_trend)
 
     st.subheader("Price vs Fuel Type")
-    st.plotly_chart(px.box(car_data_df, x='Fuel type', y='Price'))
+    fig_fuel = px.box(car_data_df, x='Fuel type', y='Price')
+    st.plotly_chart(fig_fuel)
 
     st.subheader("Price vs Manufacturer")
-    st.plotly_chart(px.box(car_data_df, x='Manufacturer', y='Price'))
+    fig_manufacturer = px.box(car_data_df, x='Manufacturer', y='Price')
+    st.plotly_chart(fig_manufacturer)
 
     st.subheader("Correlation Heatmap")
     corr = car_data_df[['Price', 'Mileage', 'Car_Age', 'Engine size']].corr()
@@ -80,6 +80,7 @@ with tab3:
 
     if st.button("Predict Price"):
         car_age = 2025 - year
+
         try:
             # Encode categorical inputs
             man_enc = encoders['Manufacturer'].transform([manufacturer])[0]
