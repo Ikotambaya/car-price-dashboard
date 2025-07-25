@@ -3,13 +3,39 @@ import pandas as pd
 import plotly.express as px
 import plotly.figure_factory as ff
 import joblib
+import os
+import requests
 
-# === Load data ===
+# === OneDrive Direct Links ===
+MODEL_URLS = {
+    "model": "https://1drv.ms/u/c/6c724deadf3112a0/Edpn_ZWxDi1Kl3C9617z2N4BoiFwp4cM4PzUSq-Foci8Ww?e=bni1YI",
+    "scaler": "https://1drv.ms/u/c/6c724deadf3112a0/EVdJ5eC0fdZAvcAcltwyLq0Bmo3ar50eB3b5L_aJzaBn6w?e=2R0kWG",
+    "encoders": "https://1drv.ms/u/c/6c724deadf3112a0/EWuMBX-bAmpMsM2qrf21W2kBrReBpEyk3-MaDoDyB0JduQ?e=S9Rrsu"
+}
+
+def download_file(url, dest_path):
+    if not os.path.exists(dest_path):
+        with requests.get(url) as r:
+            if r.status_code == 200:
+                with open(dest_path, 'wb') as f:
+                    f.write(r.content)
+            else:
+                st.error(f"Failed to download {url}")
+
+# === Ensure Models Directory Exists ===
+os.makedirs("models", exist_ok=True)
+
+# === Download Required Files ===
+download_file(MODEL_URLS["model"], "models/price_model.pkl")
+download_file(MODEL_URLS["scaler"], "models/scaler.pkl")
+download_file(MODEL_URLS["encoders"], "models/encoders.pkl")
+
+# === Load Data ===
 car_data_df = pd.read_csv('data/car_data.csv')
 car_data_df['Car_Age'] = 2025 - car_data_df['Year of manufacture']
 car_data_df['Year'] = car_data_df['Year of manufacture']
 
-# === Load model and preprocessors ===
+# === Load Model and Preprocessors ===
 model = joblib.load("models/price_model.pkl")
 scaler = joblib.load("models/scaler.pkl")
 encoders = joblib.load("models/encoders.pkl")
@@ -22,29 +48,23 @@ with tab1:
     st.title("📈 Car Sales Data - Interactive Dashboard")
 
     st.subheader("Distribution of Car Prices")
-    fig_price = px.histogram(car_data_df, x='Price', nbins=40)
-    st.plotly_chart(fig_price)
+    st.plotly_chart(px.histogram(car_data_df, x='Price', nbins=40))
 
     st.subheader("Distribution of Mileage")
-    fig_mileage = px.histogram(car_data_df, x='Mileage', nbins=40)
-    st.plotly_chart(fig_mileage)
+    st.plotly_chart(px.histogram(car_data_df, x='Mileage', nbins=40))
 
     st.subheader("Distribution of Car Age")
-    fig_age = px.histogram(car_data_df, x='Car_Age', nbins=30)
-    st.plotly_chart(fig_age)
+    st.plotly_chart(px.histogram(car_data_df, x='Car_Age', nbins=30))
 
     st.subheader("Average Price by Year of Manufacture")
     trend_data = car_data_df.groupby('Year')['Price'].mean().reset_index()
-    fig_trend = px.line(trend_data, x='Year', y='Price')
-    st.plotly_chart(fig_trend)
+    st.plotly_chart(px.line(trend_data, x='Year', y='Price'))
 
     st.subheader("Price vs Fuel Type")
-    fig_fuel = px.box(car_data_df, x='Fuel type', y='Price')
-    st.plotly_chart(fig_fuel)
+    st.plotly_chart(px.box(car_data_df, x='Fuel type', y='Price'))
 
     st.subheader("Price vs Manufacturer")
-    fig_manufacturer = px.box(car_data_df, x='Manufacturer', y='Price')
-    st.plotly_chart(fig_manufacturer)
+    st.plotly_chart(px.box(car_data_df, x='Manufacturer', y='Price'))
 
     st.subheader("Correlation Heatmap")
     corr = car_data_df[['Price', 'Mileage', 'Car_Age', 'Engine size']].corr()
@@ -80,7 +100,6 @@ with tab3:
 
     if st.button("Predict Price"):
         car_age = 2025 - year
-
         try:
             # Encode categorical inputs
             man_enc = encoders['Manufacturer'].transform([manufacturer])[0]
